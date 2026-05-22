@@ -69,17 +69,13 @@ def save_conversation(messages_list: list, directory: str = "./chats") -> str:
 if __name__ == "__main__":
     # Define your custom rules here. 
     # This example optimizes Claude for secure, clean, enterprise coding.
-    MY_SYSTEM_PROMPT = """
-    You are an expert Senior Software Architect and IP Security Specialist.
-    Your task is to design code, consider vulnerabilities, and limit liabilities.
-    
-    CRITICAL RULES:
-    1. Ensure project criteria are clear/coherent and that the design meets them.
-    2. Write self-contained code blocks with clear type hinting.
-    3. Never use or suggest insecure or deprecated third-party libraries.
-    4. Be concise. Skip conversational filler like 'Sure, I can help with that' and go straight to the solution.
-    """
-
+    if len(sys.argv) > 1:
+        MY_SYSTEM_PROMPT = sys.argv[1]
+        print(f"--> Using Custom System Prompt from Terminal: '{MY_SYSTEM_PROMPT[:40]}...'")
+    else:
+        # Default safety fallback prompt if you don't type anything extra
+        MY_SYSTEM_PROMPT = "You are a helpful, secure, and precise AI assistant."
+        print("--> Using Default System Prompt.")
     print("====================================================")
     print(" Secure Private Chat Interface Initialized (API)   ")
     print(" Running Model: claude-sonnet-4-6                  ")
@@ -91,52 +87,32 @@ if __name__ == "__main__":
     
     while True:
         try:
-            # Capture user input directly from the terminal
-            print("You (Type 'SEND' on a blank line when finished):")
-            lines = []
-            while True:
-                line = input()
-                if line.strip() == "SEND":
-                    break
-                lines.append(line)
-            user_prompt = "\n".join(lines)
+            user_prompt = input("You: ")
             
-            # Check for exit commands
+            # 1. CRITICAL: Check for exit FIRST before doing anything else
             if user_prompt.strip().lower() in ['exit', 'quit']:
                 print("\nSaving your session history...")
-                # Call the modular save function
                 save_status = save_conversation(conversation_history)
                 print(save_status)
-                
                 print("Closing secure session. Local RAM wiped. Goodbye!")
                 break
                 
-            # Skip empty inputs
+            # 2. Skip empty inputs next
             if not user_prompt.strip():
                 continue
                 
-            # 1. Append the user's message to the local history list
-            conversation_history.append({
-                "role": "user",
-                "content": user_prompt
-            })
+            # 3. Only append to history AFTER confirming it's a real prompt
+            conversation_history.append({"role": "user", "content": user_prompt})
             
             print("\nClaude is thinking...")
-            
-            # 2. Pass the entire updated history list to the API
             response = send_chat_history(conversation_history, MY_SYSTEM_PROMPT)
             
             print(f"\nClaude:\n{response}\n")
             print("-" * 50)
-
-            # 3. Append Claude's response to the local history list 
-            # This ensures Claude remembers what it said on the next turn
-            conversation_history.append({
-                "role": "assistant",
-                "content": response
-            })
+            
+            conversation_history.append({"role": "assistant", "content": response})
             
         except KeyboardInterrupt:
-            # Handles Ctrl+C cleanly
             print("\nSession interrupted. Goodbye!")
             break
+
