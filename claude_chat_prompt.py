@@ -70,7 +70,12 @@ if __name__ == "__main__":
     # Define your custom rules here. 
     # This example optimizes Claude for secure, clean, enterprise coding.
     if len(sys.argv) > 1:
-        MY_SYSTEM_PROMPT = sys.argv[1]
+        filename = sys.argv[1]
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                MY_SYSTEM_PROMPT = f.read()
+        except FileNotFoundError:
+            print(f"Error: {filename} not found in this directory.")
         print(f"--> Using Custom System Prompt from Terminal: '{MY_SYSTEM_PROMPT[:40]}...'")
     else:
         # Default safety fallback prompt if you don't type anything extra
