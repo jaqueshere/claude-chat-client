@@ -105,6 +105,36 @@ if __name__ == "__main__":
             # 2. Skip empty inputs next
             if not user_prompt.strip():
                 continue
+
+            if user_prompt.strip().startswith('/upload'):
+                # Extract the path from the command (e.g., "/upload document.txt" -> "document.txt")
+                parts = user_prompt.split(' ', 1)
+                if len(parts) < 2:
+                    print("\n[System]: Error - Please provide a file path. Example: /upload data.txt\n")
+                    continue
+                    
+                file_path = parts[1].strip()
+                
+                # Verify the file exists locally
+                if not os.path.isfile(file_path):
+                    print(f"\n[System]: Error - File '{file_path}' not found. Check the path and try again.\n")
+                    continue
+                    
+                try:
+                    # Read the file text
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        file_content = f.read()
+                    
+                    # Optional: Ask user for an accompanying question about the file
+                    additional_prompt = input("Add a question/instructions about this file (or press Enter): ")
+                    
+                    # Format the text so Claude cleanly separates the file contents from your request
+                    user_prompt = f"Here is the contents of the file '{os.path.basename(file_path)}':\n\n```\n{file_content}\n```\n\n{additional_prompt}"
+                    print(f"\n[System]: Successfully loaded {os.path.basename(file_path)} into the context window.")
+                    
+                except Exception as e:
+                    print(f"\n[System]: Error reading file: {e}\n")
+                    continue
                 
             # 3. Only append to history AFTER confirming it's a real prompt
             conversation_history.append({"role": "user", "content": user_prompt})
